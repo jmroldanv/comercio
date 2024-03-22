@@ -1,0 +1,44 @@
+{
+	"info": {
+		"_postman_id": "ef70842f-e1b2-4fe6-9df5-507e79b95378",
+		"name": "Pruebas",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "574380"
+	},
+	"item": [
+		{
+			"name": "Challenge Comercio",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/api/prices?date=2020-06-14.10:00:00&brandId=1&productId=35455",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"v1",
+						"prices"
+					],
+					"query": [
+						{
+							"key": "date",
+							"value": "2020-06-14.10:00:00"
+						},
+						{
+							"key": "brandId",
+							"value": "1"
+						},
+						{
+							"key": "productId",
+							"value": "35455"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

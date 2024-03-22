@@ -1,0 +1,58 @@
+server:
+  undertow:
+    threads:
+      worker: 200
+  compression:
+    enabled: true
+    mime-types:
+      - application/json
+      - application/xml
+      - text/html
+      - text/xml
+      - text/plain
+    min-response-size: 1024
+  port: ${SERVER_PORT:8080}
+  servlet:
+    context-path: ${CONTEXT_PATH:}
+  http2:
+    enabled: true
+  shutdown: graceful
+
+management:
+  endpoint.health.probes.enabled: ${MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED:true}
+  endpoints:
+    enabled-by-default: ${MANAGEMENT_ENDPOINTS_ENABLED:true}
+    web.exposure.include: "*"
+
+spring:
+  main:
+    lazy-initialization: true
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: none
+  sql:
+    init:
+      platform: h2
+  lifecycle:
+    timeout-per-shutdown-phase: ${SHUTDOWN_TIMEOUT:20s}
+
+
+openapi:
+  comercio:
+    base-path: /api
+
+logging:
+  level:
+    root: info
+    com.minsait: debug
+
+application:
+  cache:
+    instance-name: challenge
+    ttl-seconds: ${CACHE_TTL:30}
+
+springdoc:
+  api-docs:
+    enabled: ${SPRINGDOC_ENABLED:true}
+

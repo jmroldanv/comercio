@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.minsait.challenge</groupId>
+        <artifactId>challenge-infrastructure</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath> <!-- lookup parent from repository -->
+    </parent>
+
+    <artifactId>challenge-infrastructure-rest</artifactId>
+    <name>${project.groupId}::${project.artifactId}</name>
+
+    <properties>
+        <package.name>com.minsait.challenge.comercio.infrastructure.rest</package.name>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>challenge-domain</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-starter-tomcat</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-undertow</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>io.swagger.core.v3</groupId>
+            <artifactId>swagger-annotations</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.swagger.core.v3</groupId>
+            <artifactId>swagger-models</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.openapitools</groupId>
+            <artifactId>jackson-databind-nullable</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.dataformat</groupId>
+            <artifactId>jackson-dataformat-yaml</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-jsr310</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!-- tag::openapi-generator-maven-plugin[] -->
+            <plugin>
+                <groupId>org.openapitools</groupId>
+                <artifactId>openapi-generator-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                        <configuration>
+                            <inputSpec>${project.basedir}/src/main/spec/openapi.yaml</inputSpec> <!--1-->
+                            <generatorName>spring</generatorName><!--2-->
+                            <library>spring-boot</library><!--3-->
+                            <addCompileSourceRoot>true</addCompileSourceRoot>
+                            <apiPackage>${package.name}.apimodel.api</apiPackage>
+                            <modelPackage>${package.name}.apimodel.model</modelPackage>
+                            <modelNameSuffix>Dto</modelNameSuffix>
+                            <supportingFilesToGenerate>ApiUtil.java</supportingFilesToGenerate>
+                            <generateApiDocumentation>false</generateApiDocumentation>
+                            <generateApiTests>false</generateApiTests>
+                            <generateModelDocumentation>false</generateModelDocumentation>
+                            <generateModelTests>false</generateModelTests>
+                            <configOptions>
+                                <basePackage>${package.name}</basePackage>
+                                <dateLibrary>java8-localdatetime</dateLibrary>
+                                <interfaceOnly>true</interfaceOnly>
+                               <!-- <delegatePattern>true</delegatePattern> -->
+                                <java8>true</java8>
+                                <useJakartaEe>true</useJakartaEe><!--4-->
+                                <useSpringBoot3>true</useSpringBoot3><!--5-->
+                            </configOptions>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- end::openapi-generator-maven-plugin[] -->
+        </plugins>
+    </build>
+</project>

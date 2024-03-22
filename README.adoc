@@ -1,0 +1,155 @@
+= Prueba técnica
+José Manuel Roldán <jmroldan@minsait.com>
+1.0, Marzo 19, 2024
+:toc:
+:icons: font
+:encoding: utf-8
+:numbered:
+
+:toc-title!: Índice de contenidos
+:figure-caption!: Figura
+:appendix-caption!: Anexo
+:chapter-caption!: Capítulo
+
+== Introducción
+
+Este documento describe la solución propuesta para la link:prueba-tecnica.txt[prueba técnica] de desarrollo de un microservicio de consulta de precios de productos en una fecha dada y considerando una cadena de tiendas.
+
+== Arquitectura de la solución
+
+La solución propuesta se basa en un microservicio considerando https://alistir.cockburn.us/hexagonal-architecture/[Arquitectura Hexagonal] y https://alistir.cockburn.us/ports-and-adapters/[Puertos y Adaptadores].
+
+La estructura del proyecto se ha realizado con un proyecto Maven multimódulo:
+
+* link:challenge-application[`challenge-application`]: Módulo que contiene la lógica de negocio. En esta capa se implementan los casos de uso de la aplicación.
+* link:challenge-boot[`challenge-boot`]: Módulo que contiene la link:challenge-boot/src/main/resources/application.yaml[configuración] de la aplicación y la inicialización de la misma.
+* link:challenge-domain[`challenge-domain`]: Módulo que contiene las entidades de negocio, las interfaces de los puertos así como la definición de los casos de uso.
+* link:challenge-infrastructure[`challenge-infrastructure`]: Módulo que contiene la implementación de los puertos de la aplicación. En esta capa se implementan los adaptadores de los puertos. Está compuesta por dos submódulos:
+** link:challenge-infrastructure/challenge-infrastructure-persistence/[`challenge-infrastructure-persistence`]: Módulo que contiene la implementación de los puertos de la aplicación para la persistencia de datos. En la prueba técnica se solicita que se utilice una base de datos en memoria, por lo que se ha utilizado https://www.h2database.com[H2 Database].
+** link:challenge-infrastructure/challenge-infrastructure-rest/[`challenge-infrastructure-rest`]: Módulo que contiene la implementación de los puertos de la aplicación para la exposición de servicios REST. Es en esta capa donde se especifica la definición de los servicios REST mediante el uso de OpenAPI en el archivo link:challenge-infrastructure/challenge-infrastructure-rest/src/main/spec/openapi.yaml[`openapi.yaml`].
+
+La arquitectura de la solución se puede ver en el siguiente diagrama:
+
+[plantuml, arquitectura, svg]
+----
+include::plantuml/diagrama-clases.puml[]
+----
+
+En este diagrama se ha obviado incluir los detalles de las clases y métodos para simplificar la visualización, así como clases de mapeo entre entidades y DTOs, clases de configuración existentes en cada submódulo, etc.
+
+== Tecnologías utilizadas
+
+Se han utilizado las siguientes tecnologías:
+
+* Java 17.
+* https://maven.apache.org/[Maven] v3.8.4.
+* https://spring.io/projects/spring-boot[Spring Boot] v3.2.2.
+* https://spring.io/projects/spring-data-jpa[Spring Data JPA]. Para la implementación de la capa de persistencia.
+* https://mapstruct.org/[MapStruct]. Para mapeo entre beans.
+* https://projectlombok.org/[Lombok]. Para reducir el código boilerplate, aunque en la capa de dominio se han utilizado https://docs.oracle.com/en/java/javase/17/language/records.html[Records].
+* https://hazelcast.com/use-cases/caching/[Hazelcast]. Para la implementación de la caché.
+* https://www.h2database.com/[H2 Database]. Para la base de datos en memoria.
+* Testing:
+** https://junit.org/junit5/[JUnit 5]. Para la implementación de pruebas unitarias.
+** https://cucumber.io/[Cucumber]. Para la implementación de pruebas de aceptación.
+
+== Consideraciones de diseño
+
+* No se han implementado pruebas unitarias en todas las capas, únicamente se han desarrollado pruebas de integración y pruebas de arquitectura que están disponibles en el módulo link:challenge-boot[`challenge-boot`]:
+** link:challenge-boot/src/test/java/com/minsait/challenge/comercio/infrastructure/rest/PricesApiControllerIT.java[`PricesApiController.java`]. Pruebas de integración de los servicios REST utilizando JUnit 5 con TestRestTemplate y RestClient.
+** link:challenge-boot/src/test/java/com/minsait/challenge/comercio/infrastructure/rest/cucumber/PricesCucumberIT.java[`PricesCucumberIT.java`]. Pruebas de aceptación utilizando Cucumber.
+* Se ha implementado una caché utilizando Hazelcast mediante la clase de configuración link:challenge-infrastructure/challenge-infrastructure-persistence/src/main/java/com/minsait/challenge/comercio/infrastructure/persistence/config/CacheConfiguration.java[`CacheConfiguration.java`]. Se ha anotado el método `findPrice`de la clase link:challenge-infrastructure/challenge-infrastructure-persistence/src/main/java/com/minsait/challenge/comercio/infrastructure/persistence/PriceDaoImpl.java[`PriceDaoImpl.java`] con la anotación `@Cacheable`. Asimismo, se ha definido mediante propiedad que el tiempo de duración de los elementos en caché (por defecto, 30 segundos, para poder comprobar en la traza cuándo se recupera de la base de datos y no de la caché).
+* Ninguna clase de implementación (ya sean adaptadores o casos de uso) tienen anotaciones tipo `@Service`, `@Component`, etc. sino que los beans se crean en las clases de configuración por cada capa.
+* Se ha creado un manejador de excepciones genérico para la capa de infraestructura que captura todas las excepciones no controladas y las convierte en excepciones de negocio. Se ha implementado mediante la clase link:challenge-infrastructure/challenge-infrastructure-rest/src/main/java/com/minsait/challenge/comercio/infrastructure/rest/handler/RestApiExceptionHandler.java[`RestApiExceptionHandler.java`].
+* En la creación del modelo de datos mediante link:challenge-infrastructure/challenge-infrastructure-persistence/src/main/resources/schema-h2.sql[`schema-h2.sql`] se ha incluido un script para la creación de las tablas `BRANDS`, `PRODUCTS` y `PRICES`, así como la creación de un índice de búsqueda.
+* En el repository link:challenge-infrastructure/challenge-infrastructure-persistence/src/main/java/com/minsait/challenge/comercio/infrastructure/persistence/repositories/PriceEntityRepository.java[`PriceEntityRepository.java`] se ha incluido un método personalizado para la búsqueda de precios por fecha, cadena y producto utilizando la anotación `@Query`. La misma operación se puede realizar utilizando la nomenclatura propia de Spring Data (método `findFirstByBrandAndProductAndStartDateLessThanEqualAndEndDateGreaterThanEqualOrderByPriorityDesc`).
+* En la configuración de la aplicación se han habilitado todos los endpoints de gestión de Spring Boot. Esta configuración se deshabilitaría en entorno de Producción.
++
+[source, yaml]
+----
+management:
+  endpoint.health.probes.enabled: ${MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED:true}
+  endpoints:
+    enabled-by-default: ${MANAGEMENT_ENDPOINTS_ENABLED:true}
+    web.exposure.include: "*"
+----
+
+== Ejecución de la aplicación
+
+. Para ejecutar la aplicación, primero se debe compilar el proyecto. Para ello, se debe ejecutar el siguiente comando en la raíz del proyecto:
++
+[source, shell]
+----
+mvn clean package
+----
+. Una vez compilado el proyecto, se genera un jar autoejecutable link:challenge-boot/target/challenge-boot-1.0.0-SNAPSHOT.jar[`challenge-boot-1.0.0-SNAPSHOT`].
+. Para ejecutar la aplicación, se debe ejecutar el siguiente comando en la raíz del proyecto:
++
+[source, shell]
+----
+java -jar challenge-boot/target/challenge-boot-1.0.0-SNAPSHOT.jar
+----
+. La aplicación se ejecutará en el puerto 8080.
+. Dado que se ha incluido Swagger (OpenAPI), se puede acceder a la documentación de los servicios REST en la URL link:http://localhost:8080/swagger-ui/index.html[`http://localhost:8080/swagger-ui/index.html`], donde se pueden realizar invocaciones.
+. Asimismo, se ha incluido un archivo de colección de Postman en la raíz del proyecto link:challenge.postman_collection.json[`challenge.postman_collection.json`] que se puede importar en Postman para realizar invocaciones a los servicios REST.
+. También es posible probarlo mediante la línea de comandos utilizando `curl` o `httpie`:
++
+[source, shell]
+----
+curl -X GET "http://localhost:8080/api/prices?applicationDate=2020-06-14T10:00:00&productId=35455&brandId=1" -H "accept: application/json"
+
+http GET "http://localhost:8080/api/prices?applicationDate=2020-06-14T10:00:00&productId=35455&brandId=1"
+----
+teniendo la salida esperada:
++
+[source, json]
+----
+{
+    "brandId": 1,
+    "currency": "EUR",
+    "endDate": "2020-12-31T23:59:59",
+    "price": 35.5,
+    "priceId": 1,
+    "productId": 35455,
+    "startDate": "2020-06-14T00:00:00"
+}
+----
+
+== Configuración Maven
+
+A continuación se detallan algunas consideraciones tomadas en cuenta en la configuración de Maven:
+
+=== Archivo link:pom.xml[`pom.xml`] principal
+
+* Se ha utilizado el plugin `maven-compiler-plugin` para compilar el proyecto con Java 17, aplicando rutas de procesamiento de anotaciones y generación de fuentes:
++
+[source,xml]
+----
+include::pom.xml[tags=maven-compiler-plugin]
+----
+* Se ha utilizado el plugin `spotless-maven-plugin` para aplicar reglas de formato de código:
++
+[source,xml]
+----
+include::pom.xml[tags=spotless-maven-plugin]
+----
+* Se ha utilizado el plugin `maven-surefire-plugin` para la ejecución de pruebas unitarias:
++
+[source,xml]
+----
+include::pom.xml[tags=maven-surefire-plugin]
+----
+<1> Pruebas de JUnit 5.
+<2> Pruebas de integración.
+
+=== Archivo link:challenge-infrastructure/challenge-infrastructure-rest/pom.xml[`challenge-infrastructure/challenge-infrastructure-rest/pom.xml`]
+
+* Se ha incluido el plugin `openapi-generator-maven-plugin` para la generación de código a partir de la especificación OpenAPI.
++
+[source,xml]
+----
+include::challenge-infrastructure/challenge-infrastructure-rest/pom.xml[tags=openapi-generator-maven-plugin]
+----
+<1> Ruta donde está el archivo de especificación OpenAPI.
+<2> y <3> Se indica que la generación de código es con Spring Boot.
+<4> Se indica que se utilice `jakarta.*` en lugar de `java.*`.

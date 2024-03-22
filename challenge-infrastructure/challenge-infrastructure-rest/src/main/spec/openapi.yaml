@@ -1,0 +1,77 @@
+openapi: 3.0.3
+info:
+  title: Comercio API
+  version: 1.0.0
+paths:
+  /prices:
+    get:
+      tags:
+        - prices
+      operationId: getPriceDetails
+      summary: Get price details
+      parameters:
+        - name: brandId
+          in: query
+          required: true
+          schema:
+            type: integer
+        - name: productId
+          in: query
+          required: true
+          schema:
+            type: integer
+        - name: applicationDate
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: Price details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PriceDetails'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+components:
+  schemas:
+    PriceDetails:
+      type: object
+      properties:
+        productId:
+          type: integer
+        brandId:
+          type: integer
+        priceId:
+          type: integer
+        startDate:
+          type: string
+          format: date-time
+        endDate:
+          type: string
+          format: date-time
+        price:
+          type: number
+          format: double
+        currency:
+          type: string
+    Error:
+      type: object
+      properties:
+        status:
+          type: integer
+        title:
+          type: string
+        detail:
+          type: string
+        instance:
+          type: string
+tags:
+  - name: prices
+    description: Prices API

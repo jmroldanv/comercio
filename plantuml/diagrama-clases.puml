@@ -1,0 +1,62 @@
+@startuml
+'https://plantuml.com/class-diagram
+
+package "...comercio" {
+    package "application" {
+        package "config" {}
+        package "usecases" {
+            class SearchPricesUseCaseImpl {
+                +searchPrice()
+            }
+        }
+    }
+    package "domain" {
+        package "model" {
+            class Brand
+            class Price
+            class Product
+        }
+        package "exception" {}
+        package "ports.persistence" {
+            interface PriceDao {
+                +findPrice()
+            }
+        }
+        package "usecases" {
+            interface SearchPricesUseCase {
+                +searchPrice()
+            }
+        }
+    }
+    package "infrastructure" {
+        package "persistence" {
+            package "config" {}
+            package "entities" {}
+            package "mappers" {}
+            class PriceDaoImpl {
+                +findPrice()
+            }
+            package "repositories" {
+                interface PriceEntityRepository
+            }
+        }
+        package "rest" {
+            package "config" {}
+            package "delegates" {
+                class RestApiDelegate {
+                    +getPriceDetails()
+                }
+            }
+            package "handler" {}
+            package "mappers" {}
+        }
+    }
+}
+
+PriceDao <|-[#green]- PriceDaoImpl : implements
+SearchPricesUseCase <|-[#green]- SearchPricesUseCaseImpl : implements
+SearchPricesUseCaseImpl -[#blue]-> PriceDao : uses
+RestApiDelegate -[#blue]-> SearchPricesUseCase : uses
+PriceDaoImpl -[#blue]-> PriceEntityRepository : uses
+
+@enduml
