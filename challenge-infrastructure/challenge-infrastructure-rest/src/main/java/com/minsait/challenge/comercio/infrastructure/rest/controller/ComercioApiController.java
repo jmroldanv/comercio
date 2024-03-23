@@ -1,4 +1,4 @@
-package com.minsait.challenge.comercio.infrastructure.rest.delegates;
+package com.minsait.challenge.comercio.infrastructure.rest.controller;
 
 import com.minsait.challenge.comercio.domain.model.Price;
 import com.minsait.challenge.comercio.domain.usecases.SearchPricesUseCase;

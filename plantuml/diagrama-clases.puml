@@ -42,8 +42,8 @@ package "...comercio" {
         }
         package "rest" {
             package "config" {}
-            package "delegates" {
-                class RestApiDelegate {
+            package "controller" {
+                class ComercioApiController {
                     +getPriceDetails()
                 }
             }
@@ -56,7 +56,7 @@ package "...comercio" {
 PriceDao <|-[#green]- PriceDaoImpl : implements
 SearchPricesUseCase <|-[#green]- SearchPricesUseCaseImpl : implements
 SearchPricesUseCaseImpl -[#blue]-> PriceDao : uses
-RestApiDelegate -[#blue]-> SearchPricesUseCase : uses
+ComercioApiController -[#blue]-> SearchPricesUseCase : uses
 PriceDaoImpl -[#blue]-> PriceEntityRepository : uses
 
 @enduml
